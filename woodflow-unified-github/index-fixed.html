@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>🔧 WoodFlow - لوحة التحكم الشاملة</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff; 
+      font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; 
+      margin: 0; 
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+    .hero { 
+      text-align: center; 
+      padding: 40px 0; 
+      background: rgba(255,255,255,0.1); 
+      border-radius: 20px; 
+      margin-bottom: 30px;
+      backdrop-filter: blur(10px);
+    }
+    .hero h1 { font-size: 48px; margin: 0 0 10px 0; }
+    .hero p { font-size: 18px; opacity: 0.9; margin: 0; }
+    .card { 
+      background: rgba(255,255,255,0.15); 
+      border: 1px solid rgba(255,255,255,0.2); 
+      border-radius: 15px; 
+      padding: 25px; 
+      margin: 20px 0;
+    }
+    .btn { 
+      background: #4CAF50; 
+      color: white; 
+      border: none; 
+      padding: 12px 24px; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-size: 16px;
+    }
+    .btn:hover { background: #45a049; }
+    .status { 
+      padding: 10px 15px; 
+      border-radius: 8px; 
+      margin: 10px 0; 
+      text-align: center;
+    }
+    .success { background: #4CAF50; }
+    .error { background: #f44336; }
+    .loading { background: #ff9800; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>🔧 WoodFlow Control Panel</h1>
+      <p>نظام إدارة مشاريع الأخشاب المتقدم</p>
+    </div>
+
+    <div class="card">
+      <h3>🌐 حالة الخادم</h3>
+      <div id="serverStatus" class="status loading">🔄 جاري الفحص...</div>
+      <button class="btn" onclick="checkServer()">🔄 اختبار الاتصال</button>
+    </div>
+
+    <div class="card">
+      <h3>📊 معلومات النظام</h3>
+      <div id="systemInfo">
+        <p><strong>الإصدار:</strong> WoodFlow Unified v1.0.0</p>
+        <p><strong>قاعدة البيانات:</strong> Supabase PostgreSQL</p>
+        <p><strong>الاستضافة:</strong> Vercel Global CDN</p>
+        <p><strong>الحالة:</strong> <span id="deployStatus">🚀 مُنشر بنجاح</span></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🔗 روابط مهمة</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <button class="btn" onclick="testAPI('health')">🏥 API Health</button>
+        <button class="btn" onclick="testAPI('stats')">📊 إحصائيات</button>
+        <button class="btn" onclick="openViewer()">👁️ عارض البيانات</button>
+        <button class="btn" onclick="generateQR()">📱 رمز QR</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📋 سجل الأنشطة</h3>
+      <div id="activityLog" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; font-family: monospace; max-height: 200px; overflow-y: auto;">
+        <div>✅ تم تحميل الصفحة بنجاح</div>
+        <div>🔄 جاري فحص الاتصال بقاعدة البيانات...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // إعدادات النظام
+    const CONFIG = {
+      SUPABASE_URL: 'https://eivwcdiegrrxlgplhrfl.supabase.co',
+      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdndjZGllZ3J3eGxncGxocmZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NDY2MzQsImV4cCI6MjA3NzUyMjYzNH0.D-CKW9tShzoEB-xgGkA1Er-VTmCT0HIloaU7XtkOi4w'
+    };
+
+    function log(message) {
+      const logDiv = document.getElementById('activityLog');
+      const time = new Date().toLocaleTimeString();
+      logDiv.innerHTML += `<div>[${time}] ${message}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function checkServer() {
+      const status = document.getElementById('serverStatus');
+      status.className = 'status loading';
+      status.innerHTML = '🔄 جاري فحص الخادم...';
+      log('🔍 بدء فحص حالة الخادم');
+      
+      fetch('/api/health')
+        .then(response => response.json())
+        .then(data => {
+          status.className = 'status success';
+          status.innerHTML = '✅ الخادم يعمل بشكل ممتاز!';
+          log('✅ الخادم متصل ويعمل بنجاح');
+        })
+        .catch(error => {
+          status.className = 'status error';
+          status.innerHTML = '❌ خطأ في الاتصال بالخادم';
+          log('❌ خطأ: ' + error.message);
+        });
+    }
+
+    function testAPI(endpoint) {
+      log(`🔍 اختبار API: ${endpoint}`);
+      fetch(`/api/sync/${endpoint}`)
+        .then(response => response.json())
+        .then(data => {
+          log(`✅ API ${endpoint} يعمل بنجاح`);
+          alert(`✅ API ${endpoint} يعمل!\n\nالاستجابة: ${JSON.stringify(data, null, 2)}`);
+        })
+        .catch(error => {
+          log(`❌ خطأ في API ${endpoint}: ${error.message}`);
+          alert(`❌ خطأ في API ${endpoint}\n\n${error.message}`);
+        });
+    }
+
+    function openViewer() {
+      window.open('/public/viewer.html', '_blank');
+      log('👁️ تم فتح عارض البيانات');
+    }
+
+    function generateQR() {
+      const currentUrl = window.location.origin;
+      const qrData = `${currentUrl}/public/viewer.html`;
+      log(`📱 تم توليد رمز QR للرابط: ${qrData}`);
+      alert(`📱 رمز QR جاهز!\n\nالرابط: ${qrData}\n\nاستخدم أي تطبيق QR لمسح الكود`);
+    }
+
+    // فحص تلقائي عند تحميل الصفحة
+    window.addEventListener('load', function() {
+      log('🚀 تم تحميل لوحة التحكم بنجاح');
+      setTimeout(checkServer, 1000);
+    });
+
+    // إضافة معلومات النظام
+    document.addEventListener('DOMContentLoaded', function() {
+      const info = document.getElementById('systemInfo');
+      info.innerHTML += `
+        <p><strong>الرابط:</strong> ${window.location.origin}</p>
+        <p><strong>المتصفح:</strong> ${navigator.userAgent.split(' ')[0]}</p>
+        <p><strong>التاريخ:</strong> ${new Date().toLocaleDateString('ar')}</p>
+      `;
+    });
+  </script>
+</body>
+</html>
